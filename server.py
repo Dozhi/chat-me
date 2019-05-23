@@ -1,69 +1,40 @@
 #dozhi
-#chat-me
-#simple server and client chat program to remember threads and socket.
-#1/2 program
+#chat-me server part 
+#python3 
 
-from socket import AF_INET , socket , SOCK_STREAM
+import socket
 from threading import Thread
 
+'''GLOBALS'''
+PORT = 65432 #basic port
+BUFSIZ = 1024 #Setting pref size of inc req to 256Bytes
 
-'''GLOBAL CONSTANTS'''
-clients = {}
-adresses = {}
-
-HOST = "" #empty var to be filled with host name or ip adress
-PORT = 33000 # port to work with
-BUFSIZ = 1024
-ADDR = (HOST , PORT)
-SERVER = socket(AF_INET , SOCK_STREAM)
-SERVER.bind(ADDR)
+clients = {} #list of user clients
+clients_addresses = {}#list of user clients' addresses
 
 
+#creating TCP/IP pot
+SERVER = socket.socket(socket.AF_INET , socket.SOCK_STREAM)
 
-def accept_incoming_connections():
+#Getting server host address
+server_address = socket.gethostbyname(socket.gethostname())
+
+ADDR = (server_address , PORT)
+
+SERVER.bind(ADDR)#binding ip addr and port as addr to socket
+
+
+
+def incoming_connection_controller():
+	'''Controlling incoming clients coonections'''
 	while True:
-		client , client_adress = SERVER.accept()
-		print("%s:%s has connected!")
-		client.send("Your are connected...\n "+"Type your nickname and press enter to continue " , "utf8")
-		adress[client] = client_adress
-		thread(target=handle_client , args=(client,)).start()
+		client , client_address = SERVER.accept()
+		print("%s : has connected to server!" % client)
 
 
-def handle_client(client):  # Takes client socket as argument.
-    """Handles a single client connection."""
-    name = client.recv(BUFSIZ).decode("utf8")
-    welcome = 'Welcome %s! If you ever want to quit, type {quit} to exit.' % name
-    client.send(bytes(welcome, "utf8"))
-    msg = "%s has joined the chat!" % name
-    broadcast(bytes(msg, "utf8"))
-    clients[client] = name
-    while True:
-        msg = client.recv(BUFSIZ)
-        if msg != bytes("{quit}", "utf8"):
-            broadcast(msg, name+": ")
-        else:
-            client.send(bytes("{quit}", "utf8"))
-            client.close()
-            del clients[client]
-            broadcast(bytes("%s has left the chat." % name, "utf8"))
-            break
-
-def broadcast(msg, prefix=""):  # prefix is for name identification.
-    """Broadcasts a message to all the clients."""
-    for sock in clients:
-        sock.send(bytes(prefix, "utf8")+msg)
-
-
-
-
-
-
-
-
-if __name__=="__main__":
-    SERVER.listen(5)  # Listens for 5 connections at max.
-    print("Waiting for connection...")
-    ACCEPT_THREAD = Thread(target=accept_incoming_connections)
-    ACCEPT_THREAD.start()  # Starts the infinite loop.
-    ACCEPT_THREAD.join()
-    SERVER.close()
+if __name__ == "__main__":
+	print("Server is starting...")
+	SERVER.listen(2)#setting to server listen for 2 incoming req
+	ACCEPT_THREAD = Thread(target=incoming_connection_controller)#Setting thread of inc req controller to obj by creating obj
+	ACCEPT_THREAD.start()
+	ACCEPT_THREAD.join()
